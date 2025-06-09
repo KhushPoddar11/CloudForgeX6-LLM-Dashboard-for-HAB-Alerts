@@ -1,0 +1,16 @@
+# This text file is created based on initial discussion which can further modified depending upon the development of the project.
+Flask==2.3.2
+Flask-Cors==3.0.10
+
+openai==1.13.3
+
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.4.2
+
+pymongo==4.7.2
+dnspython==2.6.1
+
+python-dotenv==1.0.1
+
+requests==2.31.0

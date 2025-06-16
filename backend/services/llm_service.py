@@ -31,12 +31,14 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-MODEL_NAME = "claude-3-7-sonnet-20250219"  # you can change model anytime
+MODEL_NAME = "claude-3-7-sonnet-20250219"
 
-def get_llm_response(site, measurements, user_question):
+def get_llm_response(site, measurements, event_count, user_question):
     prompt = f"""
 Here are today's measurements at site {site}:
 Chl-a: {measurements['chl_a']} µg/L; SST: {measurements['sst']} °C; Turbidity: {measurements['turbidity']} NTU; Bloom probability: {measurements['probability']}.
+There have been {event_count} previous HAB events reported for this site in the selected period.
+
 User question: {user_question}
 
 Explain why there is a HAB event prediction and suggest two mitigation steps.
@@ -64,4 +66,3 @@ Explain why there is a HAB event prediction and suggest two mitigation steps.
     answer = data["content"][0]["text"]
 
     return answer
-

@@ -12,6 +12,11 @@ except Exception as e:
     print("Error loading measurements data:", e)
     measurements_df = pd.DataFrame()
 
+measurements_df.rename(columns={
+    'sst': 'sea_surface_temperature',
+    # add any other mappings here if needed
+}, inplace=True)
+
 try:
     events_df = pd.read_csv(EVENTS_FILE, encoding='latin1')
 except Exception as e:
@@ -26,35 +31,37 @@ if not events_df.empty:
     events_df['initialDate'] = pd.to_datetime(events_df['initialDate'], errors='coerce')
 
 def extract_measurements(site, start_date, end_date):
-    if measurements_df.empty:
-        raise ValueError("Measurements data not loaded.")
-
-    # Parse input dates
+    # parse dates safely
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
-    # Filter by site and date range
+    # filter rows for site + date range
     filtered = measurements_df[
         (measurements_df['site_name'] == site) &
         (measurements_df['timestamp'] >= start_date) &
         (measurements_df['timestamp'] <= end_date)
     ]
 
+    # if no data found
     if filtered.empty:
         raise ValueError("No measurements found for given site and date range.")
 
-    # Aggregate: take mean
-    chl_a = filtered['chlorophyll_a'].mean()
-    sst = filtered['sst'].mean()
-    turbidity = filtered['turbidity'].mean()
-    probability = filtered['bloom_probability'].mean()
+    # select required columns
+    filtered = filtered[[
+        'timestamp',
+        'latitude',
+        'longitude',
+        'chlorophyll_a',
+        'sea_surface_temperature',
+        'turbidity',
+        'bloom_label',
+        'bloom_probability'
+    ]]
 
-    return {
-        "chl_a": round(chl_a, 2),
-        "sst": round(sst, 2),
-        "turbidity": round(turbidity, 2),
-        "probability": round(probability, 2)
-    }
+    # convert to list of dicts
+    result = filtered.to_dict(orient='records')
+
+    return result
 
 def get_event_count(site, start_date, end_date):
     if events_df.empty:

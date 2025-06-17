@@ -1,9 +1,10 @@
 import pandas as pd
 from datetime import datetime
+from difflib import get_close_matches
 
 # Define file paths (relative to your project root)
-MEASUREMENTS_FILE = './Data/copernicus_data/hab_dashboard_data.csv'
-EVENTS_FILE = './Data/haedat_search.csv'
+MEASUREMENTS_FILE = '../Data/copernicus_data/hab_dashboard_data.csv'
+EVENTS_FILE = '../Data/haedat_search.csv'
 
 # Load both CSVs globally (only once at import time)
 try:
@@ -63,6 +64,22 @@ def extract_measurements(site, start_date, end_date):
 
     return result
 
+# def get_event_count(site, start_date, end_date):
+#     if events_df.empty:
+#         return 0
+
+#     start_date = pd.to_datetime(start_date)
+#     end_date = pd.to_datetime(end_date)
+
+#     filtered = events_df[
+#         (events_df['locationText'] == site) &
+#         (events_df['initialDate'] >= start_date) &
+#         (events_df['initialDate'] <= end_date)
+#     ]
+
+#     return len(filtered)
+
+
 def get_event_count(site, start_date, end_date):
     if events_df.empty:
         return 0
@@ -70,8 +87,20 @@ def get_event_count(site, start_date, end_date):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
+    # Get unique locations from events_df
+    unique_locations = events_df['locationText'].dropna().unique().tolist()
+
+    # Fuzzy match the closest location
+    match = get_close_matches(site, unique_locations, n=1, cutoff=0.6)
+
+    if not match:
+        return 0  # no close match found
+
+    matched_site = match[0]
+
+    # Filter by matched site and date range
     filtered = events_df[
-        (events_df['locationText'] == site) &
+        (events_df['locationText'] == matched_site) &
         (events_df['initialDate'] >= start_date) &
         (events_df['initialDate'] <= end_date)
     ]

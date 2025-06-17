@@ -1,1 +1,36 @@
 .DS_Store
+
+# Windows specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python virtual environments (important for Flask backend)
+venv/
+ENV/
+env/
+.venv/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Visual Studio Code settings
+.vscode/
+
+# Environment variables / API keys
+.env
+
+# Node.js modules (for React frontend)
+node_modules/
+
+# React build artifacts
+build/
+
+# Log files
+*.log
+
+# Test coverage
+coverage/

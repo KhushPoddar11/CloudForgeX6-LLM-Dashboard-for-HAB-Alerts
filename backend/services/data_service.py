@@ -3,8 +3,8 @@ from datetime import datetime
 from difflib import get_close_matches
 
 # Define file paths (relative to your project root)
-MEASUREMENTS_FILE = './Data/copernicus_data/hab_dashboard_data.csv'
-EVENTS_FILE = './Data/haedat_search.csv'
+MEASUREMENTS_FILE = '../Data/copernicus_data/hab_dashboard_data.csv'
+EVENTS_FILE = '../Data/haedat_search.csv'
 
 # Load both CSVs globally (only once at import time)
 try:

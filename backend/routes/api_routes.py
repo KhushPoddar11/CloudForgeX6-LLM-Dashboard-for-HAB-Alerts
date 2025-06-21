@@ -12,6 +12,7 @@ def ask_llm():
     start_date = data.get('start_date')
     end_date = data.get('end_date')
     user_question = data.get('user_question')
+    chat_history = data.get('chat_history', [])
 
     if not site or not start_date or not end_date or not user_question:
         return jsonify({"error": "Missing required fields"}), 400
@@ -38,7 +39,7 @@ def ask_llm():
         }
 
         # Call LLM service
-        answer = get_llm_response(site, measurements, event_count, user_question)
+        answer = get_llm_response(site, measurements, event_count, user_question, chat_history)
 
         return jsonify({"answer": answer})
 

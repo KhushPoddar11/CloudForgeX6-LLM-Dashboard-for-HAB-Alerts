@@ -33,7 +33,11 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 MODEL_NAME = "claude-3-7-sonnet-20250219"
 
-def get_llm_response(site, measurements, event_count, user_question):
+def get_llm_response(site, measurements, event_count, user_question, chat_history=None):
+
+    if chat_history is None:
+        chat_history = []
+
     prompt = f"""
 Here are today's measurements at site {site}:
 Chl-a: {measurements['chl_a']} µg/L; SST: {measurements['sst']} °C; Turbidity: {measurements['turbidity']} NTU; Bloom probability: {measurements['probability']}.
@@ -41,8 +45,21 @@ There have been {event_count} previous HAB events reported for this site in the 
 
 User question: {user_question}
 
-Explain why there is a HAB event prediction and suggest two mitigation steps.
+Explain why there is a HAB event prediction and suggest two mitigation steps. Answer it as if you are a chatbot.
 """
+    
+    messages = [{"role": "user", "content": prompt}]
+    
+    for msg in chat_history:
+        messages.append({
+            "role": msg["role"],
+            "content": msg["message"]
+        })
+
+    messages.append({
+        "role": "user",
+        "content": user_question
+    })
 
     headers = {
         "x-api-key": ANTHROPIC_API_KEY,
@@ -54,9 +71,7 @@ Explain why there is a HAB event prediction and suggest two mitigation steps.
         "model": MODEL_NAME,
         "max_tokens": 1000,
         "temperature": 0.5,
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
+        "messages": messages
     }
 
     response = httpx.post(CLAUDE_API_URL, headers=headers, json=payload, timeout=30)

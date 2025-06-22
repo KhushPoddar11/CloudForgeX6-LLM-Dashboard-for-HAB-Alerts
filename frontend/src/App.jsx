@@ -69,6 +69,10 @@ export default function App() {
     }
   };
 
+  const selectedSiteMeta = sites.find((s) => s.site === selectedSite);
+  const minDate = selectedSiteMeta?.start_date || '';
+  const maxDate = selectedSiteMeta?.end_date || '';
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-2xl font-bold mb-4">HAB Risk Analysis Dashboard</h1>
@@ -77,10 +81,27 @@ export default function App() {
         <SiteSelector
           sites={sites}
           selectedSite={selectedSite}
-          onChange={(val) => setSelectedSite(val)}
+          onChange={(val) => {
+            setSelectedSite(val);
+            setStartDate('');
+            setEndDate('');
+            setSiteData([]);
+          }}
         />
-        <DatePicker date={startDate} onChange={setStartDate} />
-        <DatePicker date={endDate} onChange={setEndDate} />
+        <DatePicker
+          label="Start Date"
+          date={startDate}
+          onChange={setStartDate}
+          minDate={minDate}
+          maxDate={endDate || maxDate}
+        />
+        <DatePicker
+          label="End Date"
+          date={endDate}
+          onChange={setEndDate}
+          minDate={startDate || minDate}
+          maxDate={maxDate}
+        />
       </div>
 
       <div className="flex gap-6">

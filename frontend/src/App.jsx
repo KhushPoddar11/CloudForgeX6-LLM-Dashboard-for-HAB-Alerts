@@ -1,211 +1,179 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import DatePicker from './components/DatePicker';
+import SiteSelector from './components/SiteSelector';
+import GeoMap from './components/GeoMap';
+import TimeTrendsChart from './components/TimeTrendsChart';
+import RiskPanel from './components/RiskPanel';
+import DownloadButtons from './components/DownloadButtons';
 
-function App() {
+export default function App() {
   const [sites, setSites] = useState([]);
-  const [site, setSite] = useState("");
-  const [siteMinDate, setSiteMinDate] = useState("");
-  const [siteMaxDate, setSiteMaxDate] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [selectedSite, setSelectedSite] = useState('');
+  const [siteDateRange, setSiteDateRange] = useState({ min: '', max: '' });
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [siteData, setSiteData] = useState([]);
   const [llmLoading, setLlmLoading] = useState(false);
-  const [measurements, setMeasurements] = useState([]);
-  const [showTable, setShowTable] = useState(false);
+  const [userQuestion, setUserQuestion] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/discovery/sites")
-      .then(res => setSites(res.data))
-      .catch(err => console.error("Error fetching sites", err));
+    axios.get('/api/discovery/sites').then((res) => {
+      setSites(res.data);
+    });
   }, []);
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setAnswer("");
-    setShowTable(false);
-    setLlmLoading(false);
+  useEffect(() => {
+    const siteInfo = sites.find((s) => s.site === selectedSite);
+    if (siteInfo) {
+      setSiteDateRange({ min: siteInfo.start_date, max: siteInfo.end_date });
+      setStartDate(siteInfo.start_date);
+      setEndDate(siteInfo.end_date);
+    } else {
+      setSiteDateRange({ min: '', max: '' });
+      setStartDate('');
+      setEndDate('');
+    }
+  }, [selectedSite, sites]);
 
+  useEffect(() => {
+    if (selectedSite && startDate && endDate) {
+      fetchMeasurements();
+    }
+  }, [selectedSite, startDate, endDate]);
+
+  const fetchMeasurements = async () => {
     try {
-      // First fetch measurements
-      const measurementRes = await axios.post("/api/measurements", {
-        site,
-        start_date: startDate,
-        end_date: endDate
-      });
-      setMeasurements(measurementRes.data);
-      setShowTable(true);
-
-      // Then call LLM
-      setLlmLoading(true);
-      const payload = {
-        site,
+      const res = await axios.post('/api/measurements', {
+        site: selectedSite,
         start_date: startDate,
         end_date: endDate,
-        user_question: question
-      };
-      const res = await axios.post("/api/ask-llm", payload);
-      setAnswer(res.data.answer);
-      setLlmLoading(false);
+      });
+      setSiteData(res.data);
     } catch (err) {
-      console.error(err);
-      setAnswer("Error: " + err.response?.data?.error);
+      console.error('Error fetching measurements:', err);
+    }
+  };
+
+  const askLLM = async () => {
+    const question = userQuestion.trim();
+    if (!question) return;
+
+    setLlmLoading(true);
+    const updatedHistory = [...chatHistory, { role: 'user', message: question }];
+    setChatHistory(updatedHistory);
+    setUserQuestion('');
+
+    try {
+      const res = await axios.post('/api/ask-llm', {
+        site: selectedSite,
+        start_date: startDate,
+        end_date: endDate,
+        user_question: question,
+        chat_history: updatedHistory,
+      });
+
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          message: res.data.answer || "Here's what I found for you!",
+        },
+      ]);
+    } catch (err) {
+      setChatHistory((prev) => [
+        ...prev,
+        { role: 'assistant', message: 'Oops! Something went wrong. Please try again.' },
+      ]);
+    } finally {
       setLlmLoading(false);
-    }
-
-    setLoading(false);
-  };
-
-  const handleSiteChange = (e) => {
-    const selectedValue = e.target.value;
-    if (!selectedValue) {
-      setSite("");
-      setStartDate("");
-      setEndDate("");
-      setSiteMinDate("");
-      setSiteMaxDate("");
-      setMeasurements([]);
-      setShowTable(false);
-      return;
-    }
-    const selected = sites.find(s => s.site === selectedValue);
-    setSite(selected.site);
-    setSiteMinDate(selected.start_date);
-    setSiteMaxDate(selected.end_date);
-    setStartDate(selected.start_date);
-    setEndDate(selected.end_date);
-  };
-
-  const handleStartDateChange = (e) => {
-    const newStart = e.target.value;
-    setStartDate(newStart);
-    if (newStart > endDate) {
-      setEndDate(newStart);
-    }
-  };
-
-  const handleEndDateChange = (e) => {
-    const newEnd = e.target.value;
-    setEndDate(newEnd);
-    if (newEnd < startDate) {
-      setStartDate(newEnd);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-8">
-      <div className="bg-white p-8 rounded shadow-lg w-full max-w-[90%]">
-        <h1 className="text-2xl font-bold mb-6">HAB Risk Dashboard</h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-2xl font-bold mb-4">HAB Risk Analysis Dashboard</h1>
 
-        <div className="mb-4">
-          <label className="block font-semibold">Site</label>
-          <select className="w-full p-2 border rounded" value={site} onChange={handleSiteChange}>
-            <option value="">Select a site</option>
-            {sites.map(s => (
-              <option key={s.site} value={s.site}>{s.site}</option>
-            ))}
-          </select>
+      <div className="flex flex-wrap gap-4 mb-4">
+        <SiteSelector
+          sites={sites}
+          selectedSite={selectedSite}
+          onChange={(val) => {
+            setSelectedSite(val);
+            setStartDate('');
+            setEndDate('');
+            setSiteData([]);
+            setChatHistory([]);
+          }}
+        />
+        <DatePicker
+          label="Start Date"
+          date={startDate}
+          onChange={setStartDate}
+          minDate={siteDateRange.min}
+          maxDate={endDate || siteDateRange.max}
+        />
+        <DatePicker
+          label="End Date"
+          date={endDate}
+          onChange={setEndDate}
+          minDate={startDate || siteDateRange.min}
+          maxDate={siteDateRange.max}
+        />
+      </div>
+
+      <div className="flex gap-6 mt-4">
+        <div className="flex-1">
+          {siteData.length > 0 && (
+            <>
+              <GeoMap siteData={siteData} />
+              <TimeTrendsChart data={siteData} />
+              <RiskPanel data={siteData} />
+              <DownloadButtons data={siteData} />
+            </>
+          )}
         </div>
 
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="block font-semibold">Start Date</label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded"
-              value={startDate}
-              min={siteMinDate}
-              max={endDate || siteMaxDate}
-              onChange={handleStartDateChange}
+        {siteData.length > 0 && (
+          <div className="w-full max-w-sm flex flex-col border border-gray-300 rounded-lg p-4 bg-white shadow-sm h-fit">
+            <h2 className="text-lg font-semibold mb-2">HAB Chat Assistant</h2>
+            <div className="flex flex-col space-y-2 mb-2 max-h-[400px] overflow-y-auto">
+              {chatHistory.map((chat, idx) => (
+                <div
+                  key={idx}
+                  className={`p-2 rounded-lg text-sm ${
+                    chat.role === 'user'
+                      ? 'bg-blue-100 self-end text-right'
+                      : 'bg-gray-200 self-start'
+                  }`}
+                >
+                  {chat.message}
+                </div>
+              ))}
+              {llmLoading && (
+                <div className="text-sm italic text-gray-500 self-start">
+                  Assistant is thinking...
+                </div>
+              )}
+            </div>
+
+            <textarea
+              value={userQuestion}
+              onChange={(e) => setUserQuestion(e.target.value)}
+              placeholder="Ask something like: Is the site at risk today?"
+              className="border rounded px-2 py-1 h-24 resize-none"
             />
-          </div>
-
-          <div className="flex-1">
-            <label className="block font-semibold">End Date</label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded"
-              value={endDate}
-              min={startDate || siteMinDate}
-              max={siteMaxDate}
-              onChange={handleEndDateChange}
-            />
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="block font-semibold">User Question</label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Is the site at risk today?"
-          />
-        </div>
-
-        <button
-          className="w-full bg-blue-500 text-white p-3 rounded font-semibold disabled:opacity-50"
-          onClick={handleSubmit}
-          disabled={!site || !question || loading}
-        >
-          {loading ? "Processing..." : "Ask LLM"}
-        </button>
-
-        {showTable && (
-          <div className="mt-6 overflow-x-auto">
-            <h2 className="font-semibold mb-2">Measurement Data:</h2>
-            <table className="table-auto border-collapse border border-gray-300 w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="border px-2 py-1">Timestamp</th>
-                  <th className="border px-2 py-1">Latitude</th>
-                  <th className="border px-2 py-1">Longitude</th>
-                  <th className="border px-2 py-1">Chl-a (µg/L)</th>
-                  <th className="border px-2 py-1">SST (°C)</th>
-                  <th className="border px-2 py-1">Turbidity (NTU)</th>
-                  <th className="border px-2 py-1">Bloom Label</th>
-                  <th className="border px-2 py-1">Bloom Probability</th>
-                </tr>
-              </thead>
-              <tbody>
-                {measurements.length === 0 ? (
-                  <tr><td colSpan="8" className="text-center py-2">No data</td></tr>
-                ) : (
-                  measurements.map((m, index) => (
-                    <tr key={index}>
-                      <td className="border px-2 py-1">{m.timestamp}</td>
-                      <td className="border px-2 py-1">{m.latitude}</td>
-                      <td className="border px-2 py-1">{m.longitude}</td>
-                      <td className="border px-2 py-1">{m.chlorophyll_a}</td>
-                      <td className="border px-2 py-1">{m.sea_surface_temperature}</td>
-                      <td className="border px-2 py-1">{m.turbidity}</td>
-                      <td className="border px-2 py-1">{m.bloom_label}</td>
-                      <td className="border px-2 py-1">{m.bloom_probability}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {llmLoading && (
-          <div className="mt-6 bg-yellow-100 p-4 rounded text-center font-semibold">
-            Generating LLM response...
-          </div>
-        )}
-
-        {answer && !llmLoading && (
-          <div className="mt-6 bg-gray-200 p-4 rounded">
-            <h2 className="font-semibold mb-2">LLM Response:</h2>
-            <pre className="whitespace-pre-wrap">{answer}</pre>
+            <button
+              className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded"
+              onClick={askLLM}
+              disabled={!userQuestion || llmLoading}
+            >
+              Send
+            </button>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-export default App;

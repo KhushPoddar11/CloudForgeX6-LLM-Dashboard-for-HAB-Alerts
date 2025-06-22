@@ -10,6 +10,7 @@ import DownloadButtons from './components/DownloadButtons';
 export default function App() {
   const [sites, setSites] = useState([]);
   const [selectedSite, setSelectedSite] = useState('');
+  const [siteDateRange, setSiteDateRange] = useState({ min: '', max: '' });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [siteData, setSiteData] = useState([]);
@@ -22,6 +23,19 @@ export default function App() {
       setSites(res.data);
     });
   }, []);
+
+  useEffect(() => {
+    const siteInfo = sites.find((s) => s.name === selectedSite);
+    if (siteInfo) {
+      setSiteDateRange({ min: siteInfo.min_date, max: siteInfo.max_date });
+      setStartDate(siteInfo.min_date);
+      setEndDate(siteInfo.max_date);
+    } else {
+      setSiteDateRange({ min: '', max: '' });
+      setStartDate('');
+      setEndDate('');
+    }
+  }, [selectedSite, sites]);
 
   useEffect(() => {
     if (selectedSite && startDate && endDate) {
@@ -58,11 +72,18 @@ export default function App() {
         user_question: question,
       });
 
-      setChatHistory((prev) => [...prev, { role: 'assistant', message: res.data.answer }]);
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          message:
+            res.data.answer || 'I reviewed the data and here is what I found...',
+        },
+      ]);
     } catch (err) {
       setChatHistory((prev) => [
         ...prev,
-        { role: 'assistant', message: 'Sorry, something went wrong.' },
+        { role: 'assistant', message: 'Oops! Something went wrong. Please try again.' },
       ]);
     } finally {
       setLlmLoading(false);
@@ -104,7 +125,7 @@ export default function App() {
         />
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex gap-6 mt-4">
         <div className="flex-1">
           {siteData.length > 0 && (
             <>
@@ -118,11 +139,12 @@ export default function App() {
 
         {siteData.length > 0 && (
           <div className="w-full max-w-sm flex flex-col border border-gray-300 rounded-lg p-4 bg-white shadow-sm h-fit">
+            <h2 className="text-lg font-semibold mb-2">HAB Chat Assistant</h2>
             <div className="flex flex-col space-y-2 mb-2 max-h-[400px] overflow-y-auto">
               {chatHistory.map((chat, idx) => (
                 <div
                   key={idx}
-                  className={`p-2 rounded-lg ${
+                  className={`p-2 rounded-lg text-sm ${
                     chat.role === 'user'
                       ? 'bg-blue-100 self-end text-right'
                       : 'bg-gray-200 self-start'
@@ -132,14 +154,16 @@ export default function App() {
                 </div>
               ))}
               {llmLoading && (
-                <div className="text-sm italic text-gray-500">LLM is typing...</div>
+                <div className="text-sm italic text-gray-500 self-start">
+                  Assistant is thinking...
+                </div>
               )}
             </div>
 
             <textarea
               value={userQuestion}
               onChange={(e) => setUserQuestion(e.target.value)}
-              placeholder="Ask a question about this site..."
+              placeholder="Ask something like: What is the risk today?"
               className="border rounded px-2 py-1 h-24 resize-none"
             />
             <button

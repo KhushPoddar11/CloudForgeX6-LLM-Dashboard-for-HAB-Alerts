@@ -33,16 +33,32 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 MODEL_NAME = "claude-3-7-sonnet-20250219"
 
-def get_llm_response(site, measurements, event_count, user_question):
-    prompt = f"""
-Here are today's measurements at site {site}:
-Chl-a: {measurements['chl_a']} µg/L; SST: {measurements['sst']} °C; Turbidity: {measurements['turbidity']} NTU; Bloom probability: {measurements['probability']}.
-There have been {event_count} previous HAB events reported for this site in the selected period.
+def get_llm_response(site, measurements, event_count, user_question, chat_history=None):
+    if chat_history is None:
+        chat_history = []
 
-User question: {user_question}
+    intro_message = (
+        f"You are a helpful and friendly assistant who explains harmful algal bloom (HAB) risks. You always stay in character and maintain a conversational tone based on site data and context."
+        f"Here are today's measurements at site {site}:\n"
+        f"- Chlorophyll-a: {measurements['chl_a']} µg/L\n"
+        f"- Sea Surface Temperature: {measurements['sst']} °C\n"
+        f"- Turbidity: {measurements['turbidity']} NTU\n"
+        f"- Bloom Probability: {measurements['probability']}\n\n"
+        f"There have been {event_count} previous HAB events reported at this site.\n"
+    )
 
-Explain why there is a HAB event prediction and suggest two mitigation steps.
-"""
+    messages = [{"role": "user", "content": intro_message}]
+
+    for msg in chat_history:
+        messages.append({
+            "role": msg["role"],
+            "content": msg["message"]
+        })
+
+    messages.append({
+        "role": "user",
+        "content": user_question
+    })
 
     headers = {
         "x-api-key": ANTHROPIC_API_KEY,
@@ -54,15 +70,12 @@ Explain why there is a HAB event prediction and suggest two mitigation steps.
         "model": MODEL_NAME,
         "max_tokens": 1000,
         "temperature": 0.5,
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
+        "messages": messages
     }
 
     response = httpx.post(CLAUDE_API_URL, headers=headers, json=payload, timeout=30)
     response.raise_for_status()
 
     data = response.json()
-    answer = data["content"][0]["text"]
+    return data["content"][0]["text"]
 
-    return answer

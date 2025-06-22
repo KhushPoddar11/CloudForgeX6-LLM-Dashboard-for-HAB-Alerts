@@ -34,22 +34,21 @@ CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 MODEL_NAME = "claude-3-7-sonnet-20250219"
 
 def get_llm_response(site, measurements, event_count, user_question, chat_history=None):
-
     if chat_history is None:
         chat_history = []
 
-    prompt = f"""
-Here are today's measurements at site {site}:
-Chl-a: {measurements['chl_a']} µg/L; SST: {measurements['sst']} °C; Turbidity: {measurements['turbidity']} NTU; Bloom probability: {measurements['probability']}.
-There have been {event_count} previous HAB events reported for this site in the selected period.
+    intro_message = (
+        f"You are a helpful and friendly assistant who explains harmful algal bloom (HAB) risks. You always stay in character and maintain a conversational tone based on site data and context."
+        f"Here are today's measurements at site {site}:\n"
+        f"- Chlorophyll-a: {measurements['chl_a']} µg/L\n"
+        f"- Sea Surface Temperature: {measurements['sst']} °C\n"
+        f"- Turbidity: {measurements['turbidity']} NTU\n"
+        f"- Bloom Probability: {measurements['probability']}\n\n"
+        f"There have been {event_count} previous HAB events reported at this site.\n"
+    )
 
-User question: {user_question}
+    messages = [{"role": "user", "content": intro_message}]
 
-Explain why there is a HAB event prediction and suggest two mitigation steps. Answer it as if you are a chatbot.
-"""
-    
-    messages = [{"role": "user", "content": prompt}]
-    
     for msg in chat_history:
         messages.append({
             "role": msg["role"],
@@ -78,6 +77,5 @@ Explain why there is a HAB event prediction and suggest two mitigation steps. An
     response.raise_for_status()
 
     data = response.json()
-    answer = data["content"][0]["text"]
+    return data["content"][0]["text"]
 
-    return answer

@@ -25,11 +25,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const siteInfo = sites.find((s) => s.name === selectedSite);
+    const siteInfo = sites.find((s) => s.site === selectedSite);
     if (siteInfo) {
-      setSiteDateRange({ min: siteInfo.min_date, max: siteInfo.max_date });
-      setStartDate(siteInfo.min_date);
-      setEndDate(siteInfo.max_date);
+      setSiteDateRange({ min: siteInfo.start_date, max: siteInfo.end_date });
+      setStartDate(siteInfo.start_date);
+      setEndDate(siteInfo.end_date);
     } else {
       setSiteDateRange({ min: '', max: '' });
       setStartDate('');
@@ -61,7 +61,8 @@ export default function App() {
     if (!question) return;
 
     setLlmLoading(true);
-    setChatHistory((prev) => [...prev, { role: 'user', message: question }]);
+    const updatedHistory = [...chatHistory, { role: 'user', message: question }];
+    setChatHistory(updatedHistory);
     setUserQuestion('');
 
     try {
@@ -70,14 +71,14 @@ export default function App() {
         start_date: startDate,
         end_date: endDate,
         user_question: question,
+        chat_history: updatedHistory,
       });
 
       setChatHistory((prev) => [
         ...prev,
         {
           role: 'assistant',
-          message:
-            res.data.answer || 'I reviewed the data and here is what I found...',
+          message: res.data.answer || "Here's what I found for you!",
         },
       ]);
     } catch (err) {
@@ -89,10 +90,6 @@ export default function App() {
       setLlmLoading(false);
     }
   };
-
-  const selectedSiteMeta = sites.find((s) => s.site === selectedSite);
-  const minDate = selectedSiteMeta?.start_date || '';
-  const maxDate = selectedSiteMeta?.end_date || '';
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -107,21 +104,22 @@ export default function App() {
             setStartDate('');
             setEndDate('');
             setSiteData([]);
+            setChatHistory([]);
           }}
         />
         <DatePicker
           label="Start Date"
           date={startDate}
           onChange={setStartDate}
-          minDate={minDate}
-          maxDate={endDate || maxDate}
+          minDate={siteDateRange.min}
+          maxDate={endDate || siteDateRange.max}
         />
         <DatePicker
           label="End Date"
           date={endDate}
           onChange={setEndDate}
-          minDate={startDate || minDate}
-          maxDate={maxDate}
+          minDate={startDate || siteDateRange.min}
+          maxDate={siteDateRange.max}
         />
       </div>
 
@@ -163,7 +161,7 @@ export default function App() {
             <textarea
               value={userQuestion}
               onChange={(e) => setUserQuestion(e.target.value)}
-              placeholder="Ask something like: What is the risk today?"
+              placeholder="Ask something like: Is the site at risk today?"
               className="border rounded px-2 py-1 h-24 resize-none"
             />
             <button

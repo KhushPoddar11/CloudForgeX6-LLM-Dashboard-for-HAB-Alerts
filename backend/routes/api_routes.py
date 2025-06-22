@@ -18,28 +18,28 @@ def ask_llm():
         return jsonify({"error": "Missing required fields"}), 400
 
     try:
-        # Get full measurement list
         measurements_list = extract_measurements(site, start_date, end_date)
-
         if not measurements_list:
-            return jsonify({"error": "No measurements found"}), 400
+            raise ValueError("No data available for selected date range")
 
-        # Get event count as before
-        event_count = get_event_count(site, start_date, end_date)
-
-        # Take latest measurement (or adjust if you want averages)
-        latest_measurement = measurements_list[-1]
-
-        # Prepare LLM-friendly measurement dict
+        # Take the latest entry for LLM context
+        latest = measurements_list[-1]
         measurements = {
-            "chl_a": latest_measurement["chlorophyll_a"],
-            "sst": latest_measurement["sea_surface_temperature"],
-            "turbidity": latest_measurement["turbidity"],
-            "probability": latest_measurement["bloom_probability"]
+            "chl_a": latest["chlorophyll_a"],
+            "sst": latest["sea_surface_temperature"],
+            "turbidity": latest["turbidity"],
+            "probability": latest["bloom_probability"]
         }
 
-        # Call LLM service
-        answer = get_llm_response(site, measurements, event_count, user_question, chat_history)
+        event_count = get_event_count(site, start_date, end_date)
+
+        answer = get_llm_response(
+            site=site,
+            measurements=measurements,
+            event_count=event_count,
+            user_question=user_question,
+            chat_history=chat_history
+        )
 
         return jsonify({"answer": answer})
 

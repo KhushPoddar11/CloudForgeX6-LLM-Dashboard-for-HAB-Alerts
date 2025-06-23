@@ -2,8 +2,8 @@ import pandas as pd
 from datetime import datetime
 from difflib import get_close_matches
 
-MEASUREMENTS_FILE = './Data/copernicus_data/hab_dashboard_data.csv'
-EVENTS_FILE = './Data/haedat_search.csv'
+MEASUREMENTS_FILE = '../Data/copernicus_data/hab_dashboard_data.csv'
+EVENTS_FILE = '../Data/haedat_search.csv'
 
 try:
     measurements_df = pd.read_csv(MEASUREMENTS_FILE)

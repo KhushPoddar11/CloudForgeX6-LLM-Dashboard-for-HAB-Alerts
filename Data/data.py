@@ -43,7 +43,6 @@ for dataset in datasets_to_try:
     try:
         output_file = f"irish_chlorophyll_{datetime.now().strftime('%Y%m%d')}.nc"
         
-        #last 3 months for better data availability
         end_date = datetime.now() - timedelta(days=10)
         start_date = end_date - timedelta(days=90)
         

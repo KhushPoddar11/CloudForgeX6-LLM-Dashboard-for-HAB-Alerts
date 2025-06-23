@@ -22,7 +22,6 @@ def ask_llm():
         if not measurements_list:
             raise ValueError("No data available for selected date range")
 
-        # Take the latest entry for LLM context
         latest = measurements_list[-1]
         measurements = {
             "chl_a": latest["chlorophyll_a"],

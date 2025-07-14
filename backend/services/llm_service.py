@@ -31,51 +31,73 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-MODEL_NAME = "claude-3-7-sonnet-20250219"
+MODEL_NAME = "claude-3-5-sonnet-20241022" 
 
 def get_llm_response(site, measurements, event_count, user_question, chat_history=None):
+    """
+    Query Claude with HAB site data and user question.
+    """
+    
+    if not ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
+
     if chat_history is None:
         chat_history = []
 
-    intro_message = (
-        f"You are a helpful and friendly assistant who explains harmful algal bloom (HAB) risks. You always stay in character and maintain a conversational tone based on site data and context."
-        f"Here are today's measurements at site {site}:\n"
+    system_message = (
+        "You are HAB Chat Assistant—a friendly expert on harmful algal bloom (HAB) risk. "
+        "Use the provided data to answer clearly, conversationally, and tailor advice to the specific site. "
+        "Provide practical, actionable insights based on the current measurements and historical data."
+    )
+
+    context_message = (
+        f"Current HAB monitoring data for {site}:\n"
         f"- Chlorophyll-a: {measurements['chl_a']} µg/L\n"
         f"- Sea Surface Temperature: {measurements['sst']} °C\n"
         f"- Turbidity: {measurements['turbidity']} NTU\n"
-        f"- Bloom Probability: {measurements['probability']}\n\n"
-        f"There have been {event_count} previous HAB events reported at this site.\n"
+        f"- Bloom Probability: {measurements['probability']}\n"
+        f"- Previous HAB Events: {event_count}\n\n"
+        f"User's question: {user_question}"
     )
 
-    messages = [{"role": "user", "content": intro_message}]
-
+    messages = []
+    
     for msg in chat_history:
         messages.append({
-            "role": msg["role"],
+            "role": msg["role"], 
             "content": msg["message"]
         })
-
+    
     messages.append({
         "role": "user",
-        "content": user_question
+        "content": context_message
     })
 
     headers = {
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
-        "content-type": "application/json"
+        "content-type": "application/json",
     }
 
     payload = {
         "model": MODEL_NAME,
         "max_tokens": 1000,
         "temperature": 0.5,
+        "system": system_message,  
         "messages": messages
     }
 
-    response = httpx.post(CLAUDE_API_URL, headers=headers, json=payload, timeout=30)
-    response.raise_for_status()
-
-    data = response.json()
-    return data["content"][0]["text"]
+    try:
+        resp = httpx.post(CLAUDE_API_URL, headers=headers, json=payload, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        return data["content"][0]["text"]
+        
+    except httpx.HTTPStatusError as e:
+        print(f"HTTP Error: {e.response.status_code} - {e.response.text}")
+        raise
+    except Exception as e:
+        print(f"Request failed: {str(e)}")
+        raise
 

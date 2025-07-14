@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import DatePicker from './components/DatePicker';
 import SiteSelector from './components/SiteSelector';
@@ -17,6 +17,8 @@ export default function App() {
   const [llmLoading, setLlmLoading] = useState(false);
   const [userQuestion, setUserQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
+  const [showChat, setShowChat] = useState(false);
+  const chatRef = useRef(null);
 
   useEffect(() => {
     axios.get('/api/discovery/sites').then((res) => {
@@ -40,8 +42,15 @@ export default function App() {
   useEffect(() => {
     if (selectedSite && startDate && endDate) {
       fetchMeasurements();
+      setChatHistory([]);
     }
   }, [selectedSite, startDate, endDate]);
+
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, [chatHistory, llmLoading]);
 
   const fetchMeasurements = async () => {
     try {
@@ -92,7 +101,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-6 relative">
       <h1 className="text-2xl font-bold mb-4">HAB Risk Analysis Dashboard</h1>
 
       <div className="flex flex-wrap gap-4 mb-4">
@@ -108,14 +117,14 @@ export default function App() {
           }}
         />
         <DatePicker
-          label="Start Date"
+          label={`Start Date (min: ${siteDateRange.min})`}
           date={startDate}
           onChange={setStartDate}
           minDate={siteDateRange.min}
           maxDate={endDate || siteDateRange.max}
         />
         <DatePicker
-          label="End Date"
+          label={`End Date (max: ${siteDateRange.max})`}
           date={endDate}
           onChange={setEndDate}
           minDate={startDate || siteDateRange.min}
@@ -125,20 +134,47 @@ export default function App() {
 
       <div className="flex gap-6 mt-4">
         <div className="flex-1">
-          {siteData.length > 0 && (
+          {siteData.length > 0 ? (
             <>
               <GeoMap siteData={siteData} />
               <TimeTrendsChart data={siteData} />
               <RiskPanel data={siteData} />
               <DownloadButtons data={siteData} />
             </>
+          ) : (
+            selectedSite && startDate && endDate && (
+              <div className="mt-4 bg-yellow-100 border border-yellow-300 p-4 rounded text-sm text-yellow-700">
+                No measurement data available for the selected site and date range.
+              </div>
+            )
           )}
-        </div>
+              </div>
+                    </div>
 
-        {siteData.length > 0 && (
-          <div className="w-full max-w-sm flex flex-col border border-gray-300 rounded-lg p-4 bg-white shadow-sm h-fit">
-            <h2 className="text-lg font-semibold mb-2">HAB Chat Assistant</h2>
-            <div className="flex flex-col space-y-2 mb-2 max-h-[400px] overflow-y-auto">
+      <button
+        onClick={() => setShowChat(true)}
+        className="fixed bottom-6 right-6 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-lg z-40"
+      >
+        Open Chat
+      </button>
+
+      {showChat && (
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40 z-40"
+            onClick={() => setShowChat(false)}
+          />
+          <div
+            className="fixed bottom-6 right-6 w-96 max-w-full bg-white rounded-lg shadow-lg z-[9999] p-4 animate-slide-up"
+          >
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-semibold">HAB Chat Assistant</h2>
+              <button onClick={() => setShowChat(false)} className="text-sm text-gray-500 hover:text-red-500">✕</button>
+            </div>
+            <div
+              ref={chatRef}
+              className="flex flex-col space-y-2 mb-2 max-h-80 overflow-y-auto"
+            >
               {chatHistory.map((chat, idx) => (
                 <div
                   key={idx}
@@ -153,7 +189,7 @@ export default function App() {
               ))}
               {llmLoading && (
                 <div className="text-sm italic text-gray-500 self-start">
-                  Assistant is thinking...
+                  🤖 Assistant is thinking...
                 </div>
               )}
             </div>
@@ -162,18 +198,29 @@ export default function App() {
               value={userQuestion}
               onChange={(e) => setUserQuestion(e.target.value)}
               placeholder="Ask something like: Is the site at risk today?"
-              className="border rounded px-2 py-1 h-24 resize-none"
+              className="border rounded px-2 py-1 h-20 resize-none w-full"
             />
             <button
-              className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded"
+              className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded w-full"
               onClick={askLLM}
               disabled={!userQuestion || llmLoading}
             >
               Send
             </button>
           </div>
+        </>
         )}
-      </div>
+
+      {/* Animation keyframe */}
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

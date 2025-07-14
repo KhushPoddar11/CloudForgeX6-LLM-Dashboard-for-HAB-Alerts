@@ -34,3 +34,4 @@ build/
 
 # Test coverage
 coverage/
+Data/copernicus_data/hab_dashboard_ENHANCED_data.csv

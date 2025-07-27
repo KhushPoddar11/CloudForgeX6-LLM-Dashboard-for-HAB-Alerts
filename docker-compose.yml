@@ -1,24 +1,18 @@
-version: "3.8"
 services:
-
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: hab-backend
-    env_file:
-      - .env                
+    env_file: ./backend/.env
     ports:
       - "5000:5000"
     volumes:
-      - ./Data:/app/Data    
+      - ./backend:/app
+      - ./Data:/app/Data
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: hab-frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
       - "3000:80"
-    depends_on:
-      - backend

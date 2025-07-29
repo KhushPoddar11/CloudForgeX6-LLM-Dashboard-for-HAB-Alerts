@@ -6,8 +6,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MEASUREMENTS_FILE = '../Data/copernicus_data/hab_dashboard_ENHANCED_data.csv'
-EVENTS_FILE = '../Data/haedat_search.csv'
+MEASUREMENTS_FILE = 'Data/copernicus_data/hab_dashboard_ENHANCED_data.csv'
+EVENTS_FILE = 'Data/haedat_search.csv'
 
 def load_measurements_data():
     """Load measurements data with optimizations for large files"""

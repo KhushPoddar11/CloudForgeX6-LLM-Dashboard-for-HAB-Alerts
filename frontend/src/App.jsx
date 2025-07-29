@@ -597,9 +597,9 @@ export default function App() {
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-lg">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-lg font-semibold">🤖 HAB Expert Assistant</h2>
+                  <h2 className="text-lg font-semibold">🤖 HAB Assistant</h2>
                   {selectedSite && (
-                    <p className="text-blue-100 text-sm">Analyzing: {selectedSite}</p>
+                    <p className="text-blue-100 text-sm">Site name: {selectedSite}</p>
                   )}
                 </div>
                 <button 
@@ -639,7 +639,7 @@ export default function App() {
                 <div className="bg-white border p-3 rounded-lg text-sm self-start mr-auto">
                   <div className="flex items-center space-x-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                    <span className="text-gray-600">Analyzing data...</span>
+                    <span className="text-gray-600">Assistant is thinking...</span>
                   </div>
                 </div>
               )}
@@ -664,7 +664,7 @@ export default function App() {
                 onClick={askLLM}
                 disabled={!userQuestion.trim() || llmLoading || !selectedSite}
               >
-                {llmLoading ? 'Analyzing...' : 'Send Message'}
+                {llmLoading ? 'Thinking...' : 'Send Message'}
               </button>
               
               {!selectedSite && (

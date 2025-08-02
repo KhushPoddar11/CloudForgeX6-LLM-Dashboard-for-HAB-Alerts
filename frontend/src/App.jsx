@@ -255,8 +255,8 @@ export default function App() {
   // Load sites and dataset summary on component mount
   useEffect(() => {
     Promise.all([
-      axios.get('${process.env.REACT_APP_API_URL}/api/discovery/sites'),
-      axios.get('${process.env.REACT_APP_API_URL}/api/summary')
+      axios.get(`${env.REACT_APP_API_URL}/api/discovery/sites`),
+      axios.get(`${env.REACT_APP_API_URL}/api/summary`)
     ]).then(([sitesRes, summaryRes]) => {
       setSites(sitesRes.data);
       setDatasetSummary(summaryRes.data);
@@ -295,7 +295,7 @@ export default function App() {
   const fetchMeasurements = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('${process.env.REACT_APP_API_URL}/api/measurements', {
+      const res = await axios.post(`${env.REACT_APP_API_URL}/api/measurements`, {
         site: selectedSite,
         start_date: startDate,
         end_date: endDate,
@@ -318,7 +318,7 @@ export default function App() {
 
   const fetchSiteStats = async () => {
     try {
-      const res = await axios.get('${process.env.REACT_APP_API_URL}/api/sites/${selectedSite}/stats', {
+      const res = await axios.get(`${env.REACT_APP_API_URL}/api/sites/${selectedSite}/stats`, {
         params: {
           start_date: startDate,
           end_date: endDate
@@ -341,7 +341,7 @@ export default function App() {
     setUserQuestion('');
 
     try {
-      const res = await axios.post('${process.env.REACT_APP_API_URL}/api/ask-llm', {
+      const res = await axios.post(`${env.REACT_APP_API_URL}/api/ask-llm`, {
         site: selectedSite,
         start_date: startDate,
         end_date: endDate,

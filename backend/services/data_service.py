@@ -32,7 +32,7 @@ def load_measurements_data():
             SELECT * FROM measurements 
             WHERE site_name IS NOT NULL 
             ORDER BY timestamp DESC 
-            LIMIT 100000
+            LIMIT 50000
         """, engine)
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         logger.info(f"✅ Loaded {len(df):,} measurement records")

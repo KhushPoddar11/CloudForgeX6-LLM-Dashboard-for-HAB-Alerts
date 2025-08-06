@@ -34,7 +34,7 @@ def load_measurements_data():
             WHERE site_name IS NOT NULL 
             ORDER BY timestamp DESC 
             LIMIT :qlimit
-        """, engine)
+        """, engine, params={"qlimit": qlimit})
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         logger.info(f"✅ Loaded {len(df):,} measurement records")
         return df
@@ -44,13 +44,14 @@ def load_measurements_data():
 
 # Load events from DB
 def load_events_data():
+    qlimit = int(os.getenv("qlimit", 10000))
     try:
         logger.info("🔄 Loading events from DB...")
         df = pd.read_sql_query("""
             SELECT * FROM hab_events 
             ORDER BY "initialDate" DESC 
             LIMIT :qlimit
-        """, engine)
+        """, engine, params={"qlimit": qlimit})
         df['initialDate'] = pd.to_datetime(df['initialDate'], errors='coerce')
         logger.info(f"✅ Loaded {len(df):,} event records")
         return df

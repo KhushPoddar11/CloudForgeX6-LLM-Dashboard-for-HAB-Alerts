@@ -32,7 +32,7 @@ def load_measurements_data():
             SELECT * FROM measurements 
             WHERE site_name IS NOT NULL 
             ORDER BY timestamp DESC 
-            LIMIT 10000
+            LIMIT 100000
         """, engine)
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         logger.info(f"✅ Loaded {len(df):,} measurement records")
@@ -48,7 +48,7 @@ def load_events_data():
         df = pd.read_sql_query("""
             SELECT * FROM hab_events 
             ORDER BY initialDate DESC 
-            LIMIT 10000
+            LIMIT 100000
         """, engine)
         df['initialDate'] = pd.to_datetime(df['initialDate'], errors='coerce')
         logger.info(f"✅ Loaded {len(df):,} event records")
@@ -63,7 +63,7 @@ events_df = load_events_data()
 
 # Your existing logic continues below (unchanged)
 
-def extract_measurements(site, start_date, end_date, limit=1000):
+def extract_measurements(site, start_date, end_date, limit=100000):
     logger.info(f"Extracting measurements for site: {site}, date range: {start_date} to {end_date}")
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)

@@ -26,7 +26,7 @@ engine: Engine = create_engine(DATABASE_URL)
 
 # Load measurements from DB
 def load_measurements_data():
-    qlimit = os.getenv("qlimit")
+    qlimit = int(os.getenv("qlimit", 10000))
     try:
         logger.info("🔄 Loading measurements from DB...")
         df = pd.read_sql_query("""

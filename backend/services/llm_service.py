@@ -2,6 +2,7 @@ import os
 import httpx
 from dotenv import load_dotenv
 import logging
+import time
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -98,8 +99,17 @@ def get_llm_response(site, measurements, event_count, user_question, chat_histor
 
     try:
         logger.info(f"Sending LLM request for site: {site}")
+
+        start_time = time.time()
+
         resp = httpx.post(CLAUDE_API_URL, headers=headers, json=payload, timeout=30)
         resp.raise_for_status()
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        logger.info(f"✅ LLM response received in {elapsed_time:.2f} seconds")
+
         data = resp.json()
         
         response_text = data["content"][0]["text"]

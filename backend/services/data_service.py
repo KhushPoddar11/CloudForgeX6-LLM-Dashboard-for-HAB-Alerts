@@ -28,7 +28,12 @@ engine: Engine = create_engine(DATABASE_URL)
 def load_measurements_data():
     try:
         logger.info("🔄 Loading measurements from DB...")
-        df = pd.read_sql_query("SELECT * FROM measurements WHERE site_name IS NOT NULL", engine)
+        df = pd.read_sql_query("""
+            SELECT * FROM measurements 
+            WHERE site_name IS NOT NULL 
+            ORDER BY timestamp DESC 
+            LIMIT 10000
+        """, engine)
         df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         logger.info(f"✅ Loaded {len(df):,} measurement records")
         return df
@@ -40,7 +45,11 @@ def load_measurements_data():
 def load_events_data():
     try:
         logger.info("🔄 Loading events from DB...")
-        df = pd.read_sql_query("SELECT * FROM hab_events", engine)
+        df = pd.read_sql_query("""
+            SELECT * FROM hab_events 
+            ORDER BY initialDate DESC 
+            LIMIT 10000
+        """, engine)
         df['initialDate'] = pd.to_datetime(df['initialDate'], errors='coerce')
         logger.info(f"✅ Loaded {len(df):,} event records")
         return df

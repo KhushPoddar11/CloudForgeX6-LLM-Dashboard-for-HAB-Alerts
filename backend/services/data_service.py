@@ -63,7 +63,7 @@ events_df = load_events_data()
 
 # Your existing logic continues below (unchanged)
 
-def extract_measurements(site, start_date, end_date, limit=1000):
+def extract_measurements(site, start_date, end_date, limit=50000):
     logger.info(f"Extracting measurements for site: {site}, date range: {start_date} to {end_date}")
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)

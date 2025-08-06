@@ -47,7 +47,7 @@ def load_events_data():
         logger.info("🔄 Loading events from DB...")
         df = pd.read_sql_query("""
             SELECT * FROM hab_events 
-            ORDER BY initialDate DESC 
+            ORDER BY "initialDate" DESC 
             LIMIT 100000
         """, engine)
         df['initialDate'] = pd.to_datetime(df['initialDate'], errors='coerce')

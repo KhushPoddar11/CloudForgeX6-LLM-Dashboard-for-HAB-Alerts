@@ -115,7 +115,10 @@ def get_event_count(site, start_date, end_date):
 
 def get_all_sites_with_ranges():
     logger.info("Getting all sites with ranges...")
+    start_time = time.perf_counter()
+
     if measurements_df.empty:
+        logger.warning("Measurements dataframe is empty; returning []")
         return []
 
     named_sites = measurements_df[measurements_df['site_name'] != 'Open Water']
@@ -138,11 +141,13 @@ def get_all_sites_with_ranges():
     site_stats = site_stats.reset_index()
 
     result = []
+    skipped = 0
     for _, row in site_stats.iterrows():
         try:
             start_date = row['timestamp_min']
             end_date = row['timestamp_max']
             if pd.isna(start_date) or pd.isna(end_date):
+                skipped += 1
                 continue
 
             result.append({
@@ -159,10 +164,15 @@ def get_all_sites_with_ranges():
                 "center_lon": float(row['longitude_mean'])
             })
         except Exception as e:
+            skipped += 1
             logger.warning(f"Skipping site due to error: {e}")
             continue
 
     result.sort(key=lambda x: x['total_records'], reverse=True)
+
+    elapsed_time = time.perf_counter() - start_time
+    logger.info(f"✅ get_all_sites_with_ranges() done: returned {len(result)} sites (skipped {skipped}); total time ~{elapsed_time:.3f}s")
+
     return result
 
 def get_site_summary_stats():

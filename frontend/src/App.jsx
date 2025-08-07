@@ -1,231 +1,3 @@
-// import React, { useEffect, useState, useRef } from 'react';
-// import axios from 'axios';
-// import DatePicker from './components/DatePicker';
-// import SiteSelector from './components/SiteSelector';
-// import GeoMap from './components/GeoMap';
-// import TimeTrendsChart from './components/TimeTrendsChart';
-// import RiskPanel from './components/RiskPanel';
-// import DownloadButtons from './components/DownloadButtons';
-
-// export default function App() {
-//   const [sites, setSites] = useState([]);
-//   const [selectedSite, setSelectedSite] = useState('');
-//   const [siteDateRange, setSiteDateRange] = useState({ min: '', max: '' });
-//   const [startDate, setStartDate] = useState('');
-//   const [endDate, setEndDate] = useState('');
-//   const [siteData, setSiteData] = useState([]);
-//   const [llmLoading, setLlmLoading] = useState(false);
-//   const [userQuestion, setUserQuestion] = useState('');
-//   const [chatHistory, setChatHistory] = useState([]);
-//   const [showChat, setShowChat] = useState(false);
-//   const chatRef = useRef(null);
-
-//   useEffect(() => {
-//     axios.get('/api/discovery/sites').then((res) => {
-//       setSites(res.data);
-//     });
-//   }, []);
-
-//   useEffect(() => {
-//     const siteInfo = sites.find((s) => s.site === selectedSite);
-//     if (siteInfo) {
-//       setSiteDateRange({ min: siteInfo.start_date, max: siteInfo.end_date });
-//       setStartDate(siteInfo.start_date);
-//       setEndDate(siteInfo.end_date);
-//     } else {
-//       setSiteDateRange({ min: '', max: '' });
-//       setStartDate('');
-//       setEndDate('');
-//     }
-//   }, [selectedSite, sites]);
-
-//   useEffect(() => {
-//     if (selectedSite && startDate && endDate) {
-//       fetchMeasurements();
-//       setChatHistory([]);
-//     }
-//   }, [selectedSite, startDate, endDate]);
-
-//   useEffect(() => {
-//     if (chatRef.current) {
-//       chatRef.current.scrollTop = chatRef.current.scrollHeight;
-//     }
-//   }, [chatHistory, llmLoading]);
-
-//   const fetchMeasurements = async () => {
-//     try {
-//       const res = await axios.post('/api/measurements', {
-//         site: selectedSite,
-//         start_date: startDate,
-//         end_date: endDate,
-//       });
-//       setSiteData(res.data);
-//     } catch (err) {
-//       console.error('Error fetching measurements:', err);
-//     }
-//   };
-
-//   const askLLM = async () => {
-//     const question = userQuestion.trim();
-//     if (!question) return;
-
-//     setLlmLoading(true);
-//     const updatedHistory = [...chatHistory, { role: 'user', message: question }];
-//     setChatHistory(updatedHistory);
-//     setUserQuestion('');
-
-//     try {
-//       const res = await axios.post('/api/ask-llm', {
-//         site: selectedSite,
-//         start_date: startDate,
-//         end_date: endDate,
-//         user_question: question,
-//         chat_history: updatedHistory,
-//       });
-
-//       setChatHistory((prev) => [
-//         ...prev,
-//         {
-//           role: 'assistant',
-//           message: res.data.answer || "Here's what I found for you!",
-//         },
-//       ]);
-//     } catch (err) {
-//       setChatHistory((prev) => [
-//         ...prev,
-//         { role: 'assistant', message: 'Oops! Something went wrong. Please try again.' },
-//       ]);
-//     } finally {
-//       setLlmLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gray-100 p-6 relative">
-//       <h1 className="text-2xl font-bold mb-4">HAB Risk Analysis Dashboard</h1>
-
-//       <div className="flex flex-wrap gap-4 mb-4">
-//         <SiteSelector
-//           sites={sites}
-//           selectedSite={selectedSite}
-//           onChange={(val) => {
-//             setSelectedSite(val);
-//             setStartDate('');
-//             setEndDate('');
-//             setSiteData([]);
-//             setChatHistory([]);
-//           }}
-//         />
-//         <DatePicker
-//           label={`Start Date (min: ${siteDateRange.min})`}
-//           date={startDate}
-//           onChange={setStartDate}
-//           minDate={siteDateRange.min}
-//           maxDate={endDate || siteDateRange.max}
-//         />
-//         <DatePicker
-//           label={`End Date (max: ${siteDateRange.max})`}
-//           date={endDate}
-//           onChange={setEndDate}
-//           minDate={startDate || siteDateRange.min}
-//           maxDate={siteDateRange.max}
-//         />
-//       </div>
-
-//       <div className="flex gap-6 mt-4">
-//         <div className="flex-1">
-//           {siteData.length > 0 ? (
-//             <>
-//               <GeoMap siteData={siteData} />
-//               <TimeTrendsChart data={siteData} />
-//               <RiskPanel data={siteData} />
-//               <DownloadButtons data={siteData} />
-//             </>
-//           ) : (
-//             selectedSite && startDate && endDate && (
-//               <div className="mt-4 bg-yellow-100 border border-yellow-300 p-4 rounded text-sm text-yellow-700">
-//                 No measurement data available for the selected site and date range.
-//               </div>
-//             )
-//           )}
-//               </div>
-//                     </div>
-
-//       <button
-//         onClick={() => setShowChat(true)}
-//         className="fixed bottom-6 right-6 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-lg z-40"
-//       >
-//         Open Chat
-//       </button>
-
-//       {showChat && (
-//         <>
-//           <div
-//             className="fixed inset-0 bg-black bg-opacity-40 z-40"
-//             onClick={() => setShowChat(false)}
-//           />
-//           <div
-//             className="fixed bottom-6 right-6 w-96 max-w-full bg-white rounded-lg shadow-lg z-[9999] p-4 animate-slide-up"
-//           >
-//             <div className="flex justify-between items-center mb-2">
-//               <h2 className="text-lg font-semibold">HAB Chat Assistant</h2>
-//               <button onClick={() => setShowChat(false)} className="text-sm text-gray-500 hover:text-red-500">✕</button>
-//             </div>
-//             <div
-//               ref={chatRef}
-//               className="flex flex-col space-y-2 mb-2 max-h-80 overflow-y-auto"
-//             >
-//               {chatHistory.map((chat, idx) => (
-//                 <div
-//                   key={idx}
-//                   className={`p-2 rounded-lg text-sm ${
-//                     chat.role === 'user'
-//                       ? 'bg-blue-100 self-end text-right'
-//                       : 'bg-gray-200 self-start'
-//                   }`}
-//                 >
-//                   {chat.message}
-//                 </div>
-//               ))}
-//               {llmLoading && (
-//                 <div className="text-sm italic text-gray-500 self-start">
-//                   🤖 Assistant is thinking...
-//                 </div>
-//               )}
-//             </div>
-
-//             <textarea
-//               value={userQuestion}
-//               onChange={(e) => setUserQuestion(e.target.value)}
-//               placeholder="Ask something like: Is the site at risk today?"
-//               className="border rounded px-2 py-1 h-20 resize-none w-full"
-//             />
-//             <button
-//               className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded w-full"
-//               onClick={askLLM}
-//               disabled={!userQuestion || llmLoading}
-//             >
-//               Send
-//             </button>
-//           </div>
-//         </>
-//         )}
-
-//       {/* Animation keyframe */}
-//       <style>{`
-//         @keyframes slideUp {
-//           from { transform: translateY(100%); opacity: 0; }
-//           to { transform: translateY(0); opacity: 1; }
-//         }
-//         .animate-slide-up {
-//           animation: slideUp 0.3s ease-out;
-//         }
-//       `}</style>
-//     </div>
-//   );
-// }
-
-
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import DatePicker from './components/DatePicker';
@@ -252,7 +24,7 @@ export default function App() {
   const [dataLimit, setDataLimit] = useState(1000);
   const chatRef = useRef(null);
 
-  // Load sites and dataset summary on component mount
+
   useEffect(() => {
     Promise.all([
       axios.get(`${import.meta.env.VITE_API_URL}/api/discovery/sites`),
@@ -304,7 +76,7 @@ export default function App() {
       
       setSiteData(res.data.measurements || res.data);
       
-      // Show warning if data was limited
+
       if (res.data.metadata?.limited) {
         console.warn(`Large dataset limited to ${dataLimit} records. Consider narrowing date range.`);
       }
@@ -378,7 +150,7 @@ export default function App() {
             🌊 HAB Risk Analysis Dashboard
           </h1>
           
-          {/* Dataset Summary Card */}
+
           {datasetSummary && (
             <div className="bg-blue-50 p-4 rounded-lg text-sm">
               <h3 className="font-semibold text-blue-800 mb-2">Enhanced Dataset</h3>
@@ -392,7 +164,7 @@ export default function App() {
           )}
         </div>
 
-        {/* Site Selection Controls */}
+
         <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
           <div className="flex flex-wrap gap-4 mb-4">
             <SiteSelector
@@ -422,7 +194,7 @@ export default function App() {
               maxDate={siteDateRange.max}
             />
             
-            {/* Data Limit Control */}
+
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1">Data Limit:</label>
               <select 
@@ -439,7 +211,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Selected Site Information */}
+
           {selectedSite && getSelectedSiteInfo() && (
             <div className="bg-gray-50 p-4 rounded border-l-4 border-blue-500">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -467,7 +239,7 @@ export default function App() {
           )}
         </div>
 
-        {/* Loading State */}
+
         {loading && (
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -475,12 +247,12 @@ export default function App() {
           </div>
         )}
 
-        {/* Main Content */}
+
         <div className="flex gap-6">
           <div className="flex-1">
             {siteData.length > 0 ? (
               <>
-                {/* Site Statistics Panel */}
+
                 {selectedSiteStats && (
                   <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
                     <h2 className="text-xl font-semibold mb-4">📊 Site Analytics: {selectedSiteStats.site_name}</h2>
@@ -511,7 +283,7 @@ export default function App() {
                       </div>
                     </div>
                     
-                    {/* Environmental Conditions */}
+
                     {selectedSiteStats.environmental_conditions && (
                       <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
                         <div className="bg-gray-50 p-2 rounded text-center">
@@ -578,7 +350,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Enhanced Chat Interface */}
+
       <button
         onClick={() => setShowChat(true)}
         className="fixed bottom-6 right-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-full shadow-lg z-40 hover:from-blue-600 hover:to-blue-700 transition-all duration-200"
@@ -593,7 +365,7 @@ export default function App() {
             onClick={() => setShowChat(false)}
           />
           <div className="fixed bottom-6 right-6 w-96 max-w-full bg-white rounded-lg shadow-2xl z-[9999] animate-slide-up">
-            {/* Chat Header */}
+            
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-lg">
               <div className="flex justify-between items-center">
                 <div>
@@ -611,7 +383,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Chat Messages */}
+
             <div
               ref={chatRef}
               className="flex flex-col space-y-3 p-4 max-h-80 overflow-y-auto bg-gray-50"
@@ -645,7 +417,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Chat Input */}
+
             <div className="p-4 border-t bg-white rounded-b-lg">
               <textarea
                 value={userQuestion}

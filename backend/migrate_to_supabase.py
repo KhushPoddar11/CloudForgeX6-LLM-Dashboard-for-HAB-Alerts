@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """
 Simplified HAB Data Migration Script for Supabase
 No module-level initialization issues
@@ -12,14 +12,14 @@ from datetime import datetime
 import logging
 import sys
 
-# Configure logging
+
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Configuration
+
 MEASUREMENTS_FILE = '../Data/copernicus_data/hab_dashboard_ENHANCED_data.csv'
 EVENTS_FILE = '../Data/haedat_search.csv'
 
@@ -46,7 +46,7 @@ def validate_setup():
         logger.error(f"❌ Measurements file not found: {MEASUREMENTS_FILE}")
         return False, None
     
-    # Test database connection
+
     try:
         engine = create_engine(database_url)
         with engine.connect() as conn:
@@ -62,14 +62,14 @@ def create_tables(engine):
     
     logger.info("🏗️ Creating Supabase tables...")
     
-    # Drop existing tables
+
     drop_sql = """
     DROP TABLE IF EXISTS hab_events CASCADE;
     DROP TABLE IF EXISTS measurements CASCADE;
     DROP MATERIALIZED VIEW IF EXISTS site_summaries CASCADE;
     """
     
-    # Create measurements table
+
     create_measurements_sql = """
     CREATE TABLE measurements (
         id BIGSERIAL PRIMARY KEY,
@@ -124,7 +124,7 @@ def migrate_data(engine):
     chunk_number = 0
     
     try:
-        # Count total rows
+
         logger.info("📏 Counting total rows...")
         with open(MEASUREMENTS_FILE, 'r') as f:
             total_file_rows = sum(1 for _ in f) - 1
@@ -132,15 +132,15 @@ def migrate_data(engine):
         
         start_time = datetime.now()
         
-        # Process in chunks
+
         for chunk in pd.read_csv(MEASUREMENTS_FILE, chunksize=chunk_size):
             chunk_number += 1
             
-            # Clean data
+
             chunk['timestamp'] = pd.to_datetime(chunk['timestamp'], errors='coerce')
             chunk = chunk.dropna(subset=['timestamp', 'site_name'])
             
-            # Fill missing values
+
             chunk = chunk.fillna({
                 'salinity': 34.0,
                 'wind_speed': 5.0,
@@ -153,7 +153,7 @@ def migrate_data(engine):
                 'time_period': 'enhanced_dataset'
             })
             
-            # Upload to database
+
             try:
                 chunk.to_sql(
                     'measurements', 
@@ -174,7 +174,7 @@ def migrate_data(engine):
                     f"Elapsed: {elapsed:.0f}s"
                 )
                 
-                # Checkpoint every 20 chunks
+
                 if chunk_number % 20 == 0:
                     logger.info(f"🎯 Checkpoint: {chunk_number} chunks, {total_rows:,} rows migrated")
                     
@@ -270,7 +270,7 @@ def main():
     
     start_time = datetime.now()
     
-    # Validate setup
+
     is_valid, engine = validate_setup()
     if not is_valid:
         logger.error("❌ Setup validation failed")

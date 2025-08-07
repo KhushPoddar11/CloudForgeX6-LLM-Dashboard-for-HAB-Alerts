@@ -6,25 +6,21 @@ import os
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
-# Optional: load .env file
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except:
     pass
 
-# Logger setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Database setup
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise EnvironmentError("DATABASE_URL not found")
 
 engine: Engine = create_engine(DATABASE_URL)
 
-# Load measurements from DB
 def load_measurements_data():
     QLIMIT = int(os.getenv("QLIMIT", 10000))
     try:
@@ -42,7 +38,6 @@ def load_measurements_data():
         logger.error(f"❌ Failed to load measurements: {e}")
         return pd.DataFrame()
 
-# Load events from DB
 def load_events_data():
     QLIMIT = int(os.getenv("QLIMIT", 10000))
     try:
@@ -59,11 +54,9 @@ def load_events_data():
         logger.error(f"❌ Failed to load events: {e}")
         return pd.DataFrame()
 
-# Load data at startup
 measurements_df = load_measurements_data()
 events_df = load_events_data()
 
-# Your existing logic continues below (unchanged)
 
 def extract_measurements(site, start_date, end_date, limit=50000):
     logger.info(f"Extracting measurements for site: {site}, date range: {start_date} to {end_date}")

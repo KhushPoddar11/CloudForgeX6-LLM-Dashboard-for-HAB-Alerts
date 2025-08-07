@@ -25,7 +25,6 @@ def get_llm_response(site, measurements, event_count, user_question, chat_histor
     if additional_context is None:
         additional_context = {}
 
-    # Enhanced system message with more context about capabilities
     system_message = (
         "You are HAB Chat Assistant—an expert marine environmental scientist specializing in harmful algal bloom (HAB) risk assessment. "
         "You have access to comprehensive oceanographic data including satellite observations, environmental conditions, and historical bloom records. "
@@ -33,7 +32,6 @@ def get_llm_response(site, measurements, event_count, user_question, chat_histor
         "Use clear, conversational language while maintaining scientific accuracy. Always acknowledge data limitations when present."
     )
 
-    # Build comprehensive context message with enhanced data
     context_parts = [
         f"🌊 HAB MONITORING REPORT FOR {site.upper()}",
         f"📍 Region: {measurements.get('region', 'Unknown')}",
@@ -47,7 +45,6 @@ def get_llm_response(site, measurements, event_count, user_question, chat_histor
         f"• Water Turbidity: {measurements['turbidity']} NTU",
     ]
     
-    # Add enhanced environmental data if available
     if measurements.get('salinity') != "N/A":
         context_parts.append(f"• Salinity: {measurements['salinity']} PSU")
     
@@ -57,7 +54,7 @@ def get_llm_response(site, measurements, event_count, user_question, chat_histor
     if measurements.get('wave_height') != "N/A":
         context_parts.append(f"• Wave Height: {measurements['wave_height']} m")
     
-    # HAB risk assessment
+
     context_parts.extend([
         "",
         "⚠️ HAB RISK ASSESSMENT:",
@@ -69,7 +66,7 @@ def get_llm_response(site, measurements, event_count, user_question, chat_histor
     
     context_message = "\n".join(context_parts)
 
-    # Build conversation history
+
     messages = []
     
     for msg in chat_history:
@@ -91,8 +88,8 @@ def get_llm_response(site, measurements, event_count, user_question, chat_histor
 
     payload = {
         "model": MODEL_NAME,
-        "max_tokens": 1200,  # Increased for more detailed responses
-        "temperature": 0.3,   # Lower temperature for more consistent scientific responses
+        "max_tokens": 1200,  
+        "temperature": 0.3,  
         "system": system_message,  
         "messages": messages
     }
@@ -146,7 +143,7 @@ def get_enhanced_bloom_risk_explanation(measurements):
     
     explanation_parts = []
     
-    # Chlorophyll-a analysis
+
     if chl_a > 10:
         explanation_parts.append(f"🔴 HIGH chlorophyll-a levels ({chl_a} µg/L) indicate active phytoplankton growth, significantly increasing bloom risk.")
     elif chl_a > 5:
@@ -154,7 +151,7 @@ def get_enhanced_bloom_risk_explanation(measurements):
     else:
         explanation_parts.append(f"🟢 LOW chlorophyll-a levels ({chl_a} µg/L) indicate minimal phytoplankton activity.")
     
-    # Temperature analysis
+
     if sst > 20:
         explanation_parts.append(f"🌡️ WARM water temperature ({sst}°C) creates favorable conditions for harmful algae.")
     elif sst > 15:
@@ -162,7 +159,7 @@ def get_enhanced_bloom_risk_explanation(measurements):
     else:
         explanation_parts.append(f"🌡️ COOL water temperature ({sst}°C) generally inhibits rapid algal growth.")
     
-    # Turbidity analysis
+
     if turbidity > 5:
         explanation_parts.append(f"🌫️ HIGH turbidity ({turbidity} NTU) may indicate sediment disturbance or dense phytoplankton.")
     elif turbidity > 2:
@@ -170,7 +167,7 @@ def get_enhanced_bloom_risk_explanation(measurements):
     else:
         explanation_parts.append(f"💎 LOW turbidity ({turbidity} NTU) indicates clear water conditions.")
     
-    # Enhanced factors
+
     if measurements.get('wind_speed') != "N/A":
         wind_speed = measurements['wind_speed']
         if wind_speed > 8:
@@ -213,7 +210,7 @@ def generate_mitigation_recommendations(measurements, site, risk_level):
             "• Monitor oxygen levels and nutrient concentrations"
         ])
     
-    # Site-specific recommendations
+
     region = measurements.get('region', '').lower()
     if 'harbor' in site.lower() or 'bay' in site.lower():
         recommendations.extend([
@@ -229,5 +226,5 @@ def generate_mitigation_recommendations(measurements, site, risk_level):
     return "\n".join(recommendations)
 
 
-# Export utility functions for use in other modules
+
 __all__ = ['get_llm_response', 'get_enhanced_bloom_risk_explanation', 'generate_mitigation_recommendations']

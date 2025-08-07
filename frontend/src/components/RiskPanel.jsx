@@ -1,57 +1,3 @@
-// import React, { useState } from 'react';
-
-// export default function RiskPanel({ data }) {
-//   const [showAllRows, setShowAllRows] = useState(false);
-//   const displayedData = showAllRows ? data : data.slice(0, 10);
-//   const totalRows = data.length;
-
-//   return (
-//     <div className="mt-6 bg-white p-6 rounded shadow">
-//       <h2 className="text-lg font-semibold mb-4">Measurement Table</h2>
-//       <div className="overflow-x-auto">
-//         <table className="min-w-full text-sm border-collapse">
-//           <thead>
-//             <tr className="bg-gray-200 text-left">
-//               <th className="px-4 py-2">Timestamp</th>
-//               <th className="px-4 py-2">Latitude</th>
-//               <th className="px-4 py-2">Longitude</th>
-//               <th className="px-4 py-2">Chlorophyll-a</th>
-//               <th className="px-4 py-2">SST (°C)</th>
-//               <th className="px-4 py-2">Turbidity</th>
-//               <th className="px-4 py-2">Bloom</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {displayedData.map((row, idx) => (
-//               <tr
-//                 key={idx}
-//                 className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-//               >
-//                 <td className="px-4 py-2 whitespace-nowrap">{row.timestamp}</td>
-//                 <td className="px-4 py-2">{row.latitude.toFixed(6)}</td>
-//                 <td className="px-4 py-2">{row.longitude.toFixed(6)}</td>
-//                 <td className="px-4 py-2">{row.chlorophyll_a.toFixed(4)}</td>
-//                 <td className="px-4 py-2">{row.sea_surface_temperature.toFixed(4)}</td>
-//                 <td className="px-4 py-2">{row.turbidity.toFixed(4)}</td>
-//                 <td className="px-4 py-2">{row.bloom_label === 1 ? 'Yes' : 'No'}</td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       </div>
-
-//       {totalRows > 10 && (
-//         <button
-//           className="mt-3 text-indigo-600 hover:underline text-sm"
-//           onClick={() => setShowAllRows(!showAllRows)}
-//         >
-//           {showAllRows ? 'Show Less' : `Show All Data (${totalRows} rows)`}
-//         </button>
-//       )}
-//     </div>
-//   );
-// }
-
 import React, { useState } from 'react';
 
 export default function RiskPanel({ data }) {
@@ -62,22 +8,22 @@ export default function RiskPanel({ data }) {
   
   if (!data || data.length === 0) return null;
 
-  // Sort and filter data
+
   let processedData = [...data];
   
-  // Apply risk filter
+
   if (filterRisk !== 'all') {
     processedData = processedData.filter(row => 
       row.risk_level?.toLowerCase() === filterRisk.toLowerCase()
     );
   }
   
-  // Apply sorting
+
   processedData.sort((a, b) => {
     let aVal = a[sortColumn];
     let bVal = b[sortColumn];
     
-    // Handle different data types
+
     if (sortColumn === 'timestamp') {
       aVal = new Date(aVal);
       bVal = new Date(bVal);
@@ -136,7 +82,7 @@ export default function RiskPanel({ data }) {
     </button>
   );
 
-  // Calculate summary statistics
+
   const riskCounts = data.reduce((acc, row) => {
     const risk = row.risk_level?.toLowerCase() || 'unknown';
     acc[risk] = (acc[risk] || 0) + 1;
@@ -152,7 +98,7 @@ export default function RiskPanel({ data }) {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">📊 Enhanced Measurement Analysis</h2>
         
-        {/* Summary Cards */}
+
         <div className="flex space-x-4 text-sm">
           <div className="text-center p-2 bg-blue-50 rounded">
             <div className="font-bold text-blue-600">{avgChlorophyll.toFixed(2)}</div>
@@ -169,7 +115,7 @@ export default function RiskPanel({ data }) {
         </div>
       </div>
 
-      {/* Risk Distribution */}
+
       <div className="mb-4 p-4 bg-gray-50 rounded-lg">
         <h3 className="font-medium mb-2">🎯 Risk Level Distribution</h3>
         <div className="flex flex-wrap gap-2">
@@ -182,7 +128,7 @@ export default function RiskPanel({ data }) {
         </div>
       </div>
 
-      {/* Filters and Controls */}
+
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
           <div>
@@ -207,7 +153,7 @@ export default function RiskPanel({ data }) {
         </div>
       </div>
 
-      {/* Enhanced Data Table */}
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm border-collapse">
           <thead>
@@ -281,7 +227,7 @@ export default function RiskPanel({ data }) {
                 <td className="px-3 py-2 border-b">{row.sea_surface_temperature?.toFixed(1)}</td>
                 <td className="px-3 py-2 border-b">{row.turbidity?.toFixed(2)}</td>
                 
-                {/* Enhanced columns */}
+
                 {row.salinity !== undefined && (
                   <td className="px-3 py-2 border-b">{row.salinity?.toFixed(1)}</td>
                 )}
@@ -340,7 +286,7 @@ export default function RiskPanel({ data }) {
         </table>
       </div>
 
-      {/* Pagination Controls */}
+
       {totalRows > 25 && (
         <div className="mt-4 flex justify-between items-center">
           <button
@@ -366,7 +312,7 @@ export default function RiskPanel({ data }) {
         </div>
       )}
 
-      {/* Data Export Info */}
+
       <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
         <div className="flex items-start space-x-2">
           <span className="text-blue-600">💡</span>

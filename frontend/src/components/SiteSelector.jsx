@@ -1,23 +1,3 @@
-// import React from 'react';
-
-// export default function SiteSelector({ sites, selectedSite, onChange }) {
-//   return (
-//     <div className="flex flex-col">
-//       <label className="text-sm font-medium mb-1">Location:</label>
-//       <select
-//         value={selectedSite}
-//         onChange={(e) => onChange(e.target.value)}
-//         className="border rounded px-2 py-1"
-//       >
-//         <option value="">Select a site</option>
-//         {sites.map((site) => (
-//           <option key={site.site} value={site.site}>{site.site}</option>
-//         ))}
-//       </select>
-//     </div>
-//   );
-// }
-
 import React, { useState } from 'react';
 
 export default function SiteSelector({ sites, selectedSite, onChange }) {
@@ -25,10 +5,10 @@ export default function SiteSelector({ sites, selectedSite, onChange }) {
   const [filterRegion, setFilterRegion] = useState('all');
   const [sortBy, setSortBy] = useState('name');
 
-  // Get unique regions
+
   const regions = [...new Set(sites.map(site => site.region).filter(Boolean))].sort();
 
-  // Filter and sort sites
+
   let filteredSites = sites.filter(site => {
     const matchesSearch = site.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          site.region?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -36,7 +16,7 @@ export default function SiteSelector({ sites, selectedSite, onChange }) {
     return matchesSearch && matchesRegion;
   });
 
-  // Sort sites
+
   filteredSites.sort((a, b) => {
     switch (sortBy) {
       case 'name':
@@ -78,7 +58,7 @@ export default function SiteSelector({ sites, selectedSite, onChange }) {
     <div className="flex flex-col space-y-3">
       <label className="text-sm font-medium">🏖️ Monitoring Location:</label>
       
-      {/* Search and Filter Controls */}
+
       <div className="flex space-x-2">
         <input
           type="text"
@@ -114,7 +94,7 @@ export default function SiteSelector({ sites, selectedSite, onChange }) {
         </select>
       </div>
 
-      {/* Site Selection */}
+
       <select
         value={selectedSite}
         onChange={(e) => onChange(e.target.value)}
@@ -133,7 +113,7 @@ export default function SiteSelector({ sites, selectedSite, onChange }) {
         ))}
       </select>
 
-      {/* Enhanced Site Information Display */}
+
       {selectedSite && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
           {(() => {
@@ -205,7 +185,7 @@ export default function SiteSelector({ sites, selectedSite, onChange }) {
                   </div>
                 </div>
                 
-                {/* Date Range Bar */}
+
                 <div className="mt-3 pt-3 border-t border-blue-200">
                   <div className="flex items-center justify-between text-xs text-gray-600">
                     <span>📅 Data Range:</span>
@@ -226,7 +206,7 @@ export default function SiteSelector({ sites, selectedSite, onChange }) {
         </div>
       )}
 
-      {/* Sites Summary */}
+
       {filteredSites.length > 0 && (
         <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
           📈 Showing {filteredSites.length} of {sites.length} sites

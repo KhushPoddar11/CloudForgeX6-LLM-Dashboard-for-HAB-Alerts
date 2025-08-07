@@ -59,7 +59,9 @@ events_df = load_events_data()
 
 
 def extract_measurements(site, start_date, end_date, limit=50000):
+    start_time = time.perf_counter()
     logger.info(f"Extracting measurements for site: {site}, date range: {start_date} to {end_date}")
+
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
@@ -87,8 +89,15 @@ def extract_measurements(site, start_date, end_date, limit=50000):
     ]
     available_columns = [col for col in desired_columns if col in filtered.columns]
     filtered = filtered[available_columns]
+
     if 'sst' in filtered.columns and 'sea_surface_temperature' not in filtered.columns:
         filtered = filtered.rename(columns={'sst': 'sea_surface_temperature'})
+
+    elapsed_time = time.perf_counter() - start_time
+    logger.info(
+        f"✅ extract_measurements() done: returned {len(filtered)} records "
+        f"for site '{site}'; total time ~{elapsed_time:.3f}s"
+    )
 
     return filtered.to_dict(orient='records')
 
@@ -176,24 +185,59 @@ def get_all_sites_with_ranges():
     return result
 
 def get_site_summary_stats():
+    start_time = time.perf_counter()
+    logger.info("Computing site summary stats...")
+
     if measurements_df.empty:
+        elapsed = time.perf_counter() - start_time
+        logger.info(f"✅ get_site_summary_stats() done: dataframe empty; total time ~{elapsed:.3f}s")
         return {}
 
-    return {
-        "total_records": len(measurements_df),
-        "unique_sites": measurements_df['site_name'].nunique(),
+    # Safe date formatter (handles NaT)
+    def _fmt(ts):
+        return ts.strftime('%Y-%m-%d') if pd.notna(ts) else None
+
+    total_records = len(measurements_df)
+    unique_sites = measurements_df['site_name'].nunique()
+
+    start_ts = measurements_df['timestamp'].min()
+    end_ts = measurements_df['timestamp'].max()
+
+    regions = (
+        measurements_df['region'].value_counts().to_dict()
+        if 'region' in measurements_df.columns else {}
+    )
+    data_sources = (
+        measurements_df['dataset_source'].value_counts().to_dict()
+        if 'dataset_source' in measurements_df.columns else {}
+    )
+    risk_distribution = (
+        measurements_df['risk_level'].value_counts().to_dict()
+        if 'risk_level' in measurements_df.columns else {}
+    )
+
+    chlorophyll = measurements_df['chlorophyll_a']
+    summary = {
+        "total_records": total_records,
+        "unique_sites": unique_sites,
         "date_range": {
-            "start": measurements_df['timestamp'].min().strftime('%Y-%m-%d'),
-            "end": measurements_df['timestamp'].max().strftime('%Y-%m-%d')
+            "start": _fmt(start_ts),
+            "end": _fmt(end_ts)
         },
-        "regions": measurements_df['region'].value_counts().to_dict() if 'region' in measurements_df.columns else {},
-        "data_sources": measurements_df['dataset_source'].value_counts().to_dict() if 'dataset_source' in measurements_df.columns else {},
-        "risk_distribution": measurements_df['risk_level'].value_counts().to_dict() if 'risk_level' in measurements_df.columns else {},
+        "regions": regions,
+        "data_sources": data_sources,
+        "risk_distribution": risk_distribution,
         "chlorophyll_stats": {
-            "mean": float(measurements_df['chlorophyll_a'].mean()),
-            "median": float(measurements_df['chlorophyll_a'].median()),
-            "std": float(measurements_df['chlorophyll_a'].std()),
-            "min": float(measurements_df['chlorophyll_a'].min()),
-            "max": float(measurements_df['chlorophyll_a'].max())
+            "mean": float(chlorophyll.mean()),
+            "median": float(chlorophyll.median()),
+            "std": float(chlorophyll.std()),
+            "min": float(chlorophyll.min()),
+            "max": float(chlorophyll.max())
         }
     }
+
+    elapsed = time.perf_counter() - start_time
+    logger.info(
+        f"✅ get_site_summary_stats() done: summarized {total_records} records across {unique_sites} sites; total time ~{elapsed:.3f}s"
+    )
+    return summary
